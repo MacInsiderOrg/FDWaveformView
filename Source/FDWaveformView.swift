@@ -290,8 +290,8 @@ public class FDWaveformView: UIView {
             scaledWidth = CGFloat(cachedSampleRange.last! - zoomSamples.startIndex) / CGFloat(zoomSamples.count)
             scaledProgressWidth = CGFloat(progressSamples - zoomSamples.startIndex) / CGFloat(zoomSamples.count)
         }
+        
         let childFrame = CGRectMake(frame.size.width * scaledX, 0, frame.size.width * scaledWidth, frame.size.height)
-        let iv = image.image
         image.frame = childFrame
         highlightedImage.frame = childFrame
         clipping.frame = CGRectMake(0, 0, self.frame.size.width * scaledProgressWidth, self.frame.size.height)
@@ -408,7 +408,7 @@ public class FDWaveformView: UIView {
     }
 
     // TODO: switch to a synchronous function that paints onto a given context? (for issue #2)
-    func plotLogGraph(samples: [CGFloat], maximumValue max: CGFloat, zeroValue min: CGFloat, imageHeight: CGFloat, done: (image: UIImage, selectedImage: UIImage)->Void) {
+    func plotLogGraph(samples: [CGFloat], maximumValue max: CGFloat, zeroValue min: CGFloat, imageHeight: CGFloat, done: (image: UIImage?, selectedImage: UIImage?) -> Void) {
         let imageSize = CGSizeMake(CGFloat(samples.count), imageHeight)
         UIGraphicsBeginImageContext(imageSize)
         let context = UIGraphicsGetCurrentContext()!
@@ -430,7 +430,13 @@ public class FDWaveformView: UIView {
             CGContextAddLineToPoint(context, CGFloat(x), verticalMiddle + height)
             CGContextStrokePath(context);
         }
-        let image = UIGraphicsGetImageFromCurrentImageContext()
+        
+        guard let image = UIGraphicsGetImageFromCurrentImageContext() else {
+            done(image: nil, selectedImage: nil)
+
+            return
+        }
+
         let drawRect = CGRectMake(0, 0, image.size.width, image.size.height)
         CGContextSetFillColorWithColor(context, progressColor.CGColor)
         UIRectFillUsingBlendMode(drawRect, .SourceAtop)
